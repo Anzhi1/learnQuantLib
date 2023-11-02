@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\boost\boost_1_83_0;D:\quantlib\QuantLib-master;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\boost\boost_1_83_0\stage\lib;D:\quantlib\QuantLib-master\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\QuantLib-1.32;D:\boost_1_83_0;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\QuantLib-1.32\lib;D:\boost_1_83_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -108,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\boost\boost_1_83_0;D:\quantlib\QuantLib-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\QuantLib-1.32;D:\boost_1_83_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
