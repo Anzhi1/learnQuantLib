@@ -156,6 +156,63 @@ void interest_rate() {
 void instruments() {
     Date today(7, March, 2014);
     Settings::instance().evaluationDate() = today;
+    auto payOff = ext::make_shared<PlainVanillaPayoff>(Option::Call, 100.0);
+    auto exercise = ext::make_shared<EuropeanExercise>(Date(7, June, 2014));
+    
+    EuropeanOption option(payOff, exercise);
+
+    auto u = ext::make_shared<SimpleQuote>(100.0);
+    auto r = ext::make_shared<SimpleQuote>(0.01);
+    auto sigma = ext::make_shared<SimpleQuote>(0.20);
+
+    Handle<YieldTermStructure> riskFreeCurve(ext::make_shared<FlatForward>(0, TARGET(), Handle<Quote>(r), Actual360()));
+   
+    Handle<BlackVolTermStructure> volatility(ext::make_shared<BlackConstantVol>(0, TARGET(), Handle<Quote>(sigma), Actual360()));
+
+    auto process = ext::make_shared<BlackScholesProcess>(Handle<Quote>(u), riskFreeCurve,
+        volatility);
+    auto engine = ext::make_shared<AnalyticEuropeanEngine>(process);
+
+    option.setPricingEngine(engine);
+
+    cout << option.NPV() << endl;
+    cout << option.delta() << endl;
+    cout << option.gamma() << endl;
+    cout << option.vega() << endl;
+
+    //market changes
+    cout << "----------market changes----------" << endl;
+
+    u->setValue(105.0);
+    cout << option.NPV() << endl;
+    r->setValue(0.01);
+    sigma->setValue(0.20);
+
+    cout << option.NPV() << endl;
+
+    r->setValue(0.03);
+
+    cout << option.NPV() << endl;
+
+    sigma->setValue(0.25);
+
+    cout << option.NPV() << endl;
+
+    //date changes
+    cout << "----------date changes----------" << endl;
+    u->setValue(105.0);
+    r->setValue(0.01);
+    sigma->setValue(0.20);
+    cout << option.NPV() << endl;
+    Settings::instance().evaluationDate() = Date(7, April, 2014);
+    cout << option.NPV() << endl;
+
+    //other pricing methods
+
+
+
+
+
 
 
 

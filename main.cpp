@@ -9,6 +9,6 @@ using namespace std;
 int main()
 {
     //test commit2
-    interest_rate();
+    instruments();
 }
 
