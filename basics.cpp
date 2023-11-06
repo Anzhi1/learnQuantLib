@@ -208,11 +208,32 @@ void instruments() {
     cout << option.NPV() << endl;
 
     //other pricing methods
+    cout << "----------pricing mothod changes----------" << endl;
+    Settings::instance().evaluationDate() = today;
+    cout << option.NPV() << endl;
 
+    Handle<YieldTermStructure> flatForward(ext::make_shared<FlatForward>(0, TARGET(), 0.0, Actual360()));
 
+    auto process2 = ext::make_shared<HestonProcess>(Handle<YieldTermStructure>(riskFreeCurve),
+        Handle<YieldTermStructure>(flatForward), Handle<Quote>(u), 0.04, 0.1, 0.01, 0.05, -0.75);
 
+    auto model = ext::make_shared<HestonModel>(process2);
 
+    auto engine2 = ext::make_shared<AnalyticHestonEngine>(model);
+    option.setPricingEngine(engine2);
+    cout << option.NPV() << endl;
+        
+    //lazy recalculation
 
+    auto engine3 = MakeMCEuropeanEngine<PseudoRandom>(process)
+        .withSteps(20)
+        .withSamples(250000);
+        
+    option.setPricingEngine(engine3);
+    cout << option.NPV() << endl;
+
+    u->setValue(104.0);
+    cout << option.NPV() << endl;
 
 
 
