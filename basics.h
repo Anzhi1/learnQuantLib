@@ -13,3 +13,9 @@ void interest_rate();
 
 //5.Instruments
 void instruments();
+
+//6.Numerical Greeks calculation
+void numerical_greeks();
+
+//7.Markets quotes
+void market_quote();

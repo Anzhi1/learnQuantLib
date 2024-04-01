@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\QuantLib-1.32;D:\boost_1_83_0;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\QuantLib-1.32\lib;D:\boost_1_83_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\quantlib\QuantLib-1.33;D:\boost_1_83_0;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\quantlib\QuantLib-1.33\lib;D:\boost_1_83_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -108,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\QuantLib-1.32;D:\boost_1_83_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\boost\boost_1_83_0;D:\quantlib\QuantLib-1.33;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,10 +133,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="basics.cpp" />
+    <ClCompile Include="interest_rate_curves.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basics.h" />
+    <ClInclude Include="interest_rate_curves.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
