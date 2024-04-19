@@ -134,11 +134,13 @@
   <ItemGroup>
     <ClCompile Include="basics.cpp" />
     <ClCompile Include="interest_rate_curves.cpp" />
+    <ClCompile Include="interest_rate_model.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basics.h" />
     <ClInclude Include="interest_rate_curves.h" />
+    <ClInclude Include="interest_rate_model.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

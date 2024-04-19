@@ -24,12 +24,18 @@
     <ClCompile Include="interest_rate_curves.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="interest_rate_model.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basics.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="interest_rate_curves.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="interest_rate_model.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

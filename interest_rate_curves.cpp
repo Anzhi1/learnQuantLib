@@ -419,22 +419,367 @@ void euribor_curve() {
 	basis = { 0.0650, 0.0540 };
 	tenor = { 35, 60 };
 	for (int i = 0; i < rates.size(); i++) {
-		synth_helpers.push_back(ext::make_shared<SwapRateHelper>(Handle<Quote>()));
+		synth_helpers.push_back(ext::make_shared<SwapRateHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>((rates[i] - basis[i])/100)),Period(tenor[i], Years),
+			TARGET(),Annual, Unadjusted, Thirty360(Thirty360::BondBasis),euribor3m, Handle<Quote>(), Period(0, Days), discount_curve));
+	}
+
+	//turn of the year
+
+	vector<Rate> futureQuotes = { 0.1775, 0.1274, 0.1222, 0.1269, 0.1565, 0.1961, 0.2556, 0.3101 };
+	vector<Date> futureDates = {Date(19, December, 2012), Date(20, March, 2013), Date(19, June, 2013), Date(18, September, 2013), Date(18, December, 2013),
+		Date(19, March , 2014), Date(18, June, 2014), Date(17, September, 2014)};
+
+	spot = euribor6m_curve->referenceDate();
+	day_counter = euribor3m->dayCounter();
+	vector<Time> times;
+	Time t4= 0;
+	for (int i = 0; i < futureDates.size();i++) {
+		if (i != 4) {
+			times.push_back(day_counter.yearFraction(spot, futureDates[i]));
+		}
+		else {
+			t4 = day_counter.yearFraction(spot, futureDates[i]);
+		}
+		
+	}
+	vector<Rate> tempRates = { 0.1775, 0.1274, 0.1222, 0.1269, 0.1961, 0.2556, 0.3101 };
+	MonotonicCubicNaturalSpline f(times.begin(),times.end(), tempRates.begin());
+	cout << futureQuotes[4] << " "  << " " << f(t4) << endl;
+
+
+	Real J = (futureQuotes[4] - f(t4)) / 100;
+	Real tau = day_counter.yearFraction(Date(18, December, 2013), Date(18, March, 2014));
+	cout << J <<"  " << tau << endl;
+
+	jumps = { Handle<Quote>(ext::make_shared<SimpleQuote>(exp(-J * tau))) };
+	jumpDates = { Date(31, December, 2012) };
+
+	temphelpers = helpers;
+	temphelpers.insert(temphelpers.end(),synth_helpers.begin(),synth_helpers.end());
+	auto euribor3m_curve = ext::make_shared<PiecewiseYieldCurve<Discount, MonotonicLogCubic>>(2, TARGET(), temphelpers, Actual365Fixed(), jumps, jumpDates);
+	euribor3m_curve->enableExtrapolation();
+
+
+
+	// 1-month Euribor
+	auto euribor1m = ext::make_shared<Euribor1M>();
+	helpers.clear();
+	synth_helpers.clear();
+	helpers.push_back(ext::make_shared<DepositRateHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>(0.110/100)),Period(1, Months), 2, TARGET(), Following,
+		false, Actual360()));
+	
+	rates = { 0.106, 0.096, 0.085, 0.079, 0.075, 0.071, 0.069, 0.066, 0.065, 0.064, 0.063 };
+	tenor = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+	for (int i = 0; i < rates.size(); i++) {
+		helpers.push_back(ext::make_shared<SwapRateHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>(rates[i] / 100)), Period(tenor[i], Months), TARGET(), Monthly,
+			Unadjusted, Thirty360(Thirty360::BondBasis), euribor1m, Handle<Quote>(), Period(0, Days), discount_curve));
+	}
+	// for longer maturities , we can combine the swaps against 6-months euribor with the 1-month vs 6-months basis swaps 
+
+	rates = { 0.324, 0.424, 0.576, 0.762, 0.954, 1.135, 1.303, 1.452, 1.584, 1.703, 1.809, 2.037, 2.187, 2.234, 2.256 };
+	basis = { 0.226, 0.238, 0.246, 0.250, 0.250, 0.248, 0.245, 0.241, 0.237, 0.233, 0.228, 0.211, 0.189, 0.175, 0.163 };
+	tenor = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 20, 25, 30 };
+	for (int i = 0; i < rates.size(); i++) {
+		helpers.push_back(ext::make_shared<SwapRateHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>((rates[i]-basis[i])/100)), Period(tenor[i], Years), 
+			TARGET(), Annual, Unadjusted, Thirty360(Thirty360::BondBasis), euribor1m, Handle<Quote>(), Period(0, Days), discount_curve));
+	}
+	//As before, we can use synthetic deposits for maturities below the 1-month tenor
+	rates = { 0.0661, 0.098, 0.0993, 0.1105 };
+	periods = { Period(1, Days), Period(1, Weeks), Period(2, Weeks), Period(3, Weeks) };
+
+	for (int i = 0; i < rates.size(); i++) {
+		synth_helpers.push_back(ext::make_shared<DepositRateHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>(rates[i]/100)), periods[i],
+			2, TARGET(), Following, false, Actual360()));
+	}
+
+	last_basis = 0.163;
+	rates = { 2.295, 2.348, 2.421, 2.463 };
+	tenor = { 35, 40, 50, 60 };
+	for (int i = 0; i < rates.size(); i++) {
+		synth_helpers.push_back(ext::make_shared<SwapRateHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>((rates[i]-last_basis)/100)), 
+			Period(tenor[i],Years),TARGET(), Annual, Unadjusted, Thirty360(Thirty360::BondBasis), euribor1m, Handle<Quote>(), Period(0,Days), discount_curve));
+	}
+
+	J = 0.0016;
+	auto t_j = euribor1m->dayCounter().yearFraction(Date(31, December, 2012), Date(2,January, 2013));
+	Real B = 1.0 / (1.0 + J * t_j);
+	jumps = { Handle<Quote>(ext::make_shared<SimpleQuote>(B)) };
+	jumpDates = {Date(31, December, 2013)};
+
+	temphelpers = helpers;
+	temphelpers.insert(temphelpers.end(), synth_helpers.begin(), synth_helpers.end());
+	auto euribor1m_curve = ext::make_shared<PiecewiseYieldCurve<Discount, MonotonicLogCubic>>(2, TARGET(), temphelpers, Actual365Fixed(), jumps, jumpDates);
+	euribor1m_curve->enableExtrapolation();
+	
+
+}
+
+void get_spot_rates(ext::shared_ptr<YieldTermStructure> yieldCurve, DayCounter day_count, 
+	Calendar calendar = UnitedStates(UnitedStates::FederalReserve), int months = 121) {
+	vector<Real> spots = {};
+	vector<Real> tenors = {};
+	Date ref_date = yieldCurve->referenceDate();
+	Date calc_date(ref_date);
+	for (int month = 0; month< months; month++) {
+		Real yrs = month / 12.0;
+		Date d = calendar.advance(ref_date, Period(month, Months));
+		Compounding compounding = Compounded;
+		Frequency freq = Semiannual;
+		InterestRate zeroRate = yieldCurve->zeroRate(yrs, compounding, freq);
+		tenors.push_back(yrs);
+		Real eq_rate = zeroRate.equivalentRate(day_count,compounding, freq, calc_date, d).rate();
+		spots.push_back(100*eq_rate);
+	}
+	cout << "Maturities   Curve" << endl;
+	for (int i = 116; i < tenors.size(); i++) {
+		cout << tenors[i] << " " << spots[i] << endl;
 	}
 
 
 
+}
+void yield_curve() {
+	//the construction of treasury yield curve
+	vector<Period> depo_maturities = { Period(6,Months), Period(12, Months) };
+	vector<Rate> depo_rates = { 5.25, 5.5 };
 
+	//bond rates
+	vector<Rate> bond_rates = { 5.75, 6.0, 6.25, 6.5, 6.75, 6.80, 7.00, 7.1, 7.15, 7.2, 7.3, 7.35, 7.4, 7.5, 7.6, 7.6, 7.7, 7.8 };
+	vector<Period> bond_maturities = {};
+	for (int i = 3; i < 21; i++) {
+		bond_maturities.push_back(Period(6 * i, Months));
+	}
+
+	vector<Period> maturities = depo_maturities;
+	maturities.insert(maturities.end(), bond_maturities.begin(), bond_maturities.end());
+	vector<Rate> rates = depo_rates;
+	rates.insert(rates.end(), bond_rates.begin(), bond_rates.end());
+
+	Date calc_date(15, January, 2015);
+	Settings::instance().evaluationDate() = calc_date;
+
+	Calendar calendar = UnitedStates(UnitedStates::SOFR);
+	BusinessDayConvention business_convention = Unadjusted;
+	DayCounter day_count = Thirty360(Thirty360::BondBasis);
+	bool end_of_month = true;
+	Natural settlement_days = 0;
+	Real face_amount = 100;
+	Period coupon_frequency(Semiannual);
 	
+	vector<ext::shared_ptr<RateHelper>> depo_helpers; 
+	for (int i = 0; i < depo_rates.size(); i++) { 
+		depo_helpers.push_back(ext::make_shared<DepositRateHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>(depo_rates[i]/100.0)), 
+			depo_maturities[i],  settlement_days, calendar, business_convention, end_of_month, day_count)); 
+	}
 
+	vector<ext::shared_ptr<RateHelper>> bond_helpers;
+	for (int i = 0; i < bond_rates.size(); i++) {
+		Date termination_date = calc_date + bond_maturities[i];   
+		Schedule schedule(calc_date, termination_date, coupon_frequency, calendar, business_convention, business_convention, DateGeneration::Backward, end_of_month);
+		auto bond_helper = ext::make_shared<FixedRateBondHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>(face_amount)), settlement_days, face_amount,
+			schedule, vector<Rate>(1,bond_rates[i] / 100.0), day_count, business_convention);
+	//	auto test = bond_helper->quote()->value();
+		bond_helpers.push_back(bond_helper);
+		
+	}
 
+	vector<ext::shared_ptr<RateHelper>> rate_helpers(depo_helpers);
+	rate_helpers.insert(rate_helpers.end(), bond_helpers.begin(), bond_helpers.end());
+	
+	auto yc_logcubicdiscount = ext::make_shared<PiecewiseYieldCurve<Discount, MonotonicLogCubic>>(calc_date, rate_helpers, day_count);
+	yc_logcubicdiscount->enableExtrapolation();
+	get_spot_rates(yc_logcubicdiscount, day_count);
 
+	cout << "-----PiecewiseLinearZero-----" << endl;
+	auto yc_linearzero = ext::make_shared<PiecewiseYieldCurve<ZeroYield, Linear>>(calc_date, rate_helpers, day_count);
+	yc_linearzero->enableExtrapolation();
+	get_spot_rates(yc_linearzero, day_count);
 
-
+	cout << "-----PiecewiseCubicZero-----" << endl;
+	auto yc_cubiczero = ext::make_shared<PiecewiseYieldCurve<ZeroYield, Cubic>>(calc_date, rate_helpers, day_count);
+	yc_cubiczero->enableExtrapolation();
+	get_spot_rates(yc_logcubicdiscount, day_count);
 
 }
 
-void euribor_curve2() {
+void implied_term_structures() {
 	
+	Date today(9, March, 2016);
+	Settings::instance().evaluationDate() = today;
+
+	vector<ext::shared_ptr<RateHelper>> helpers;
+
+	vector<Period> tenor = { Period(6, Months), Period(2, Years), Period(5, Years), Period(10, Years), Period(15, Years) };
+	vector<Rate> rates = { 0.201, 0.258, 0.464, 1.151, 1.588 };
+
+	for (int i = 0; i < tenor.size(); i++) {
+		auto helper = ext::make_shared<SwapRateHelper>(Handle<Quote>(ext::make_shared<SimpleQuote>(rates[i] / 100.0)), tenor[i], TARGET(), Annual,
+			Unadjusted, Thirty360(Thirty360::BondBasis), ext::make_shared<Euribor6M>());
+		helpers.push_back(helper);
+	}
+	auto curve = ext::make_shared<PiecewiseYieldCurve<ZeroYield, Linear>>(0, TARGET(), helpers, Actual360());
+
+	//I'm using linear interpolation on the zero rates, which isn't great for actual use, However, the resulting jumps in the forward
+	// rates will be useful as visual points of reference;note, for instance the jump around March 2018
+
+	//The curve also implies an interest-rate curve in 1 year, 
+	Date future_reference = today + Period(1, Years);
+	auto implied_curve = ext::make_shared<ImpliedTermStructure>(Handle<YieldTermStructure>(curve),future_reference);
+
+	vector<Date> dates;
+	vector<Rate> rates_1, rates_2, rates_3;
+	for (int i = 0; i < 6; i++) {
+		Date date(future_reference + Period(i, Years));
+		dates.push_back(date);
+		rates_1.push_back(curve->forwardRate(future_reference, date,Actual360(),Continuous).rate());
+		rates_2.push_back(implied_curve->zeroRate(date, Actual360(), Continuous).rate());
+		cout << date << "   " << rates_1[i] << "   " << rates_2[i] << endl;
+	}
+
+	Settings::instance().evaluationDate() = future_reference; 
+	cout << "------------date change---------------------" << endl;
+	for (int i = 0; i < dates.size(); i++) {
+		rates_3.push_back(implied_curve->zeroRate(dates[i],Actual360(), Continuous).rate());
+		cout << dates[i] << "  " << rates_2[i] << "    " << rates_3[i] << endl;
+	}
+	//the reference date of the original curve was specified relative to the evaluation date, and when we moved it the curve moved, too.
+
+	//after moving the evaluation date, the original and implied curve are exactly the same, and the spot rates return by the implied curve
+	// are no longer forward rates, but the spot rates returned by the original curve
+
+	cout << "----------moving the evaluation dates--------" << endl;
+	rates_1.clear();
+	rates_2.clear();
+	for (int i = 0; i < dates.size(); i++) {
+		rates_1.push_back(curve->forwardRate(future_reference, dates[i], Actual360(), Continuous).rate());
+		rates_2.push_back(implied_curve->zeroRate(dates[i], Actual360(), Continuous).rate());
+		cout << dates[i]<<"     "<<rates_1[i] << "   " << rates_2[i] << endl;
+	}
+
+	Settings::instance().evaluationDate() = today;
+	
+
+	vector<Date> node_dates;
+	vector<Real> node_rates;
+	auto nodes = curve->nodes();
+	cout << endl;
+	for (auto &node : nodes) {
+		node_dates.push_back(node.first);
+		node_rates.push_back(node.second);
+		cout << node.first << " " << node.second << endl;
+	}
+
+	auto frozen_curve = ext::make_shared<InterpolatedZeroCurve<Linear>>(node_dates, node_rates, curve->dayCounter());
+	implied_curve = ext::make_shared<ImpliedTermStructure>(Handle<YieldTermStructure>(frozen_curve), future_reference);
+	Settings::instance().evaluationDate() = future_reference;
+
+	cout << endl;
+	for (int i = 0; i < dates.size(); i++) {
+		Rate rate1 = frozen_curve->zeroRate(dates[i], Actual360(), Continuous).rate();
+		Rate rate2 = frozen_curve->forwardRate(future_reference, dates[i], Actual360(), Continuous).rate();
+		Rate rate3 = implied_curve->zeroRate(dates[i], Actual360(), Continuous).rate();
+		cout << dates[i] << " " << rate1 << " " << rate2 << " " << rate3 << endl;
+	}
+}
+
+void interest_rate_sensitivities() {
+	Date today(8, March, 2016);
+	Settings::instance().evaluationDate() = today;
+	vector<ext::shared_ptr<SimpleQuote>> quotes;
+	vector<ext::shared_ptr<RateHelper>> helpers;
+	quotes.push_back(ext::make_shared<SimpleQuote>(0.312/100));
+	helpers.push_back(ext::make_shared<DepositRateHelper>(Handle<Quote>(quotes[0]), Period(6, Months), 3, TARGET(), Following, false, Actual360()));
+
+	vector<Real> rates = { 0.293, 0.272, 0.260, 0.256, 0.252, 0.248, 0.254, 0.261, 0.267, 0.279, 0.291, 0.303, 0.318, 0.335, 0.352, 0.371, 0.389, 0.409 };
+	vector<int> months_to_start = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 };
+
+	for (int i = 0; i < rates.size(); i++) {
+		quotes.push_back(ext::make_shared<SimpleQuote>(rates[i]/100));
+		helpers.push_back(ext::make_shared<FraRateHelper>(Handle<Quote>(quotes[i+1]),months_to_start[i], ext::make_shared<Euribor6M>()));
+	}
+
+	rates = { 0.424, 0.576, 0.762, 0.954, 1.135, 1.303, 1.452, 1.584, 1.809, 2.037, 2.187, 2.234, 2.256, 2.295, 2.348, 2.421, 2.463 };
+
+	// 期限数组
+	vector<int> tenor = { 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30, 35, 40, 50, 60 };
+	for (int i = 0; i < rates.size(); i++) {
+		auto quote = ext::make_shared<SimpleQuote>(rates[i] / 100);
+		quotes.push_back(quote);
+		helpers.push_back(ext::make_shared<SwapRateHelper>(Handle<Quote>(quote), 
+			Period(tenor[i], Years), TARGET(), Annual, Unadjusted, Thirty360(Thirty360::BondBasis), ext::make_shared<Euribor6M>()));
+	}
+
+	auto rate_curve = ext::make_shared<PiecewiseYieldCurve<Discount, MonotonicLogCubic>>(2, TARGET(), helpers, Actual365Fixed());
+	RelinkableHandle<YieldTermStructure> curve_handle;
+	curve_handle.linkTo(rate_curve);
+
+	Schedule fixed_schedule(Date(8, April, 2016), Date(8, April, 2028), Period(1, Years), TARGET(), Following, Following, DateGeneration::Forward,false);
+	Schedule floating_schedule(Date(8, April, 2016), Date(8, April, 2028), Period(1, Years), TARGET(), Following, Following, DateGeneration::Forward,false);
+	auto index = ext::make_shared<Euribor6M>(curve_handle);
+
+	VanillaSwap swap(VanillaSwap::Payer, 10000.0, fixed_schedule, 0.02, Thirty360(Thirty360::BondBasis), floating_schedule, index, 0.0 , Actual360());
+	swap.setPricingEngine(ext::make_shared<DiscountingSwapEngine>(curve_handle));
+	Real p0 = swap.NPV();
+	cout << p0 << endl;
+
+	auto bp = 1.0e-4;
+	Real ref = quotes[0]->value();
+	quotes[0]->setValue(ref+1*bp);
+	cout << swap.NPV() << endl;
+	quotes[0]->setValue(ref);
+
+	for (auto& quote : quotes) {
+		quote->setValue(quote->value() + 1 * bp);
+	}
+	cout << swap.NPV() << endl;
+	for (auto& quote : quotes) {
+		quote->setValue(quote->value() - 1 * bp);
+	}
+	// to shift all the zero rates upwards, you can keep the original curve as it is and add one basis point to all its zero rates by 
+	// means of the ZeroSpreadedTermStructure class, To use it for pricing our swap, we'll store the original curve in a separate handle,
+	// add the spread, and link the new curve to the handle we're using for forecasting.
+	Handle<YieldTermStructure> base_curve(rate_curve);
+	auto spread = ext::make_shared<SimpleQuote>(1 * bp);
+	curve_handle.linkTo(ext::make_shared<ZeroSpreadedTermStructure>(base_curve, Handle<Quote>(spread)));
+	cout << swap.NPV() << endl;
+
+	Date spot = rate_curve->referenceDate();
+	vector<Date> dates;
+	vector<Handle<Quote>> spreads;
+	for (int i = 0; i < 21; i++) {
+		dates.push_back(spot+Period(i, Years));
+		spreads.push_back(Handle<Quote>(ext::make_shared<SimpleQuote>((i-7)*bp)));
+	}
+	curve_handle.linkTo(ext::make_shared<InterpolatedPiecewiseZeroSpreadedTermStructure<Linear>>(base_curve,spreads,dates));
+	cout << swap.NPV() << endl;
+
+	curve_handle.linkTo(rate_curve);
+	cout << swap.NPV() << endl;
+
+}
+
+void forward_rate_curves() {
+	Date today(24, August, 2015);
+	Settings::instance().evaluationDate() = today;
+
+	vector<int> tenor = { 1, 2, 3, 5, 10, 20 };
+	vector<Rate> rates = {0.01, 0.03, 0.02, 0.025, 0.035, 0.05, 0.04};
+	vector<Date> dates = { today };
+	for (int i = 0; i < tenor.size(); i++) 
+		dates.push_back(today + Period(tenor[i], Years));
+	ForwardCurve curve(dates, rates, Actual360());
+	auto nodes = curve.nodes();
+	Date d = today + Period(4, Years);
+	cout << endl << d << " " << curve.forwardRate(d, d, curve.dayCounter(), Continuous) << endl << endl;
+
+	dates.clear(); 
+	rates.clear(); 
+	vector<Real> expected; 
+	for (int i = 0; i < nodes.size(); i++) { 
+		dates.push_back(nodes[i].first); 
+		rates.push_back(curve.forwardRate(dates[i], dates[i], curve.dayCounter(), Continuous).rate());
+		expected.push_back(nodes[i].second);
+		cout << dates[i] << "  " << expected[i] << "  " << rates[i] << endl;
+	}
 
 }
