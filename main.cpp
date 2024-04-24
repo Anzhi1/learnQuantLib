@@ -9,7 +9,6 @@ using namespace std;
 
 int main()
 {
-    //test commit2
-    short_interest_rate_model_calibration();
+    caps_and_floors();
 }
 
