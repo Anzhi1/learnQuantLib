@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="basics.cpp" />
+    <ClCompile Include="bonds.cpp" />
     <ClCompile Include="equity_model.cpp" />
     <ClCompile Include="interest_rate_curves.cpp" />
     <ClCompile Include="interest_rate_model.cpp" />
@@ -140,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basics.h" />
+    <ClInclude Include="bonds.h" />
     <ClInclude Include="equity_model.h" />
     <ClInclude Include="interest_rate_curves.h" />
     <ClInclude Include="interest_rate_model.h" />

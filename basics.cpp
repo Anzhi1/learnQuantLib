@@ -360,11 +360,6 @@ void market_quote() {
 	bond.unfreeze();
 	cout << bond.cleanPrice() << endl;
 
-	
-
-
-
-
 }
 
 

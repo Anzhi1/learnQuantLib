@@ -30,6 +30,9 @@
     <ClCompile Include="equity_model.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="bonds.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basics.h">
@@ -42,6 +45,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="equity_model.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="bonds.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
